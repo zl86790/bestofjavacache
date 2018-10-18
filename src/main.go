@@ -1,7 +1,6 @@
 package main
 import (
 	"io/ioutil"
-	"log"
 	"fmt"
 	"net/http"
 )
@@ -9,20 +8,24 @@ import (
 var cacheMap map[string]string;
 
 func handler(writer http.ResponseWriter, request *http.Request){
-	languages:= request.URL.Query()["language"];
-	language := languages[0];
-	log.Println("Url Param 'language' is: " + string(language));
+	language := "";
+	topic := "";
 
+	languages:= request.URL.Query()["language"];
+	if(len(languages)>0){
+		language = languages[0];
+	}
+	
 	topics:= request.URL.Query()["topic"];
-	topic := topics[0];
-	log.Println("Url Param 'topic' is: " + string(topic));
+	if(len(topics)>0){
+		topic = topics[0];
+	}
+	
 
 	body := httpGet(language,topic)
 	if value, ok := cacheMap[language+topic]; ok {  
-		log.Println(999);
 		fmt.Fprintf(writer,string(value));
 	} else {
-		log.Println(888);
 		cacheMap[language+topic] = string(body);
 		fmt.Fprintf(writer,string(body));
 	} 
