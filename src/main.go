@@ -3,29 +3,33 @@ import (
 	"io/ioutil"
 	"fmt"
 	"net/http"
+	"log"
 )
 
 var cacheMap map[string]string;
 
 func handler(writer http.ResponseWriter, request *http.Request){
-	language := "";
-	topic := "";
-
 	languages:= request.URL.Query()["language"];
+	language := "";
 	if(len(languages)>0){
-		language = languages[0];
-	}
-	
+        	language = languages[0];
+        }
+
 	topics:= request.URL.Query()["topic"];
+	topic := "";
 	if(len(topics)>0){
 		topic = topics[0];
 	}
-	
-
-	body := httpGet(language,topic)
+        
+	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+        writer.Header().Set("Access-Control-Allow-Origin", "*")
+        
 	if value, ok := cacheMap[language+topic]; ok {  
 		fmt.Fprintf(writer,string(value));
+		log.Print(1111)
 	} else {
+		log.Print(2222)
+		body := httpGet(language,topic)
 		cacheMap[language+topic] = string(body);
 		fmt.Fprintf(writer,string(body));
 	} 
@@ -39,7 +43,16 @@ func main(){
 }
 
 func httpGet(language string,topic string) string{
-	url := "https://api.github.com/search/repositories" + "?q=language:" + language + "+topic:" + topic + "&sort=stars&order=desc"
+	url := ""
+	if(topic=="" && language==""){
+		url = "https://api.github.com/search/repositories?q=stars:%3E=500&sort=stars&order=desc"
+	}else{
+		url = "https://api.github.com/search/repositories" + "?q=language:" + language;
+		if(topic!=""){
+			url += "+topic:" + topic;
+		}
+		url += "&sort=stars&order=desc";
+	}
     resp, err :=   http.Get(url)
     if err != nil {
         // handle error
