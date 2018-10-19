@@ -3,7 +3,7 @@ import (
 	"io/ioutil"
 	"fmt"
 	"net/http"
-	"log"
+	"github.com/robfig/cron"
 )
 
 var cacheMap map[string]string;
@@ -26,9 +26,7 @@ func handler(writer http.ResponseWriter, request *http.Request){
         
 	if value, ok := cacheMap[language+topic]; ok {  
 		fmt.Fprintf(writer,string(value));
-		log.Print(1111)
 	} else {
-		log.Print(2222)
 		body := httpGet(language,topic)
 		cacheMap[language+topic] = string(body);
 		fmt.Fprintf(writer,string(body));
@@ -38,6 +36,14 @@ func handler(writer http.ResponseWriter, request *http.Request){
 
 func main(){
 	cacheMap = make(map[string]string)
+	
+	cron := cron.New();
+	spec :="0 0 0 1/1 * ?"
+    cron.AddFunc(spec, func() {
+		cacheMap = make(map[string]string);
+    })
+	cron.Start()
+	
 	http.HandleFunc("/",handler)
 	http.ListenAndServe(":3001",nil)
 }
